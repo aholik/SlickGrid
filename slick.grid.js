@@ -1341,6 +1341,10 @@ if (typeof Slick === "undefined") {
         }
       }
 
+      if (metadata && metadata.appendHtml){
+        stringArray.push(metadata.appendHtml);
+      }
+
       stringArray.push("</div>");
     }
 
