@@ -2260,6 +2260,14 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function getRowFromEvent(e) {
+      var $row = $(e.target).closest(".slick-row", $canvas);
+      if (!$row.length) {
+        return null;
+      }
+      return getRowFromNode($row[0]);
+    }
+
     function getCellNodeBox(row, cell) {
       if (!cellExists(row, cell)) {
         return null;
@@ -3122,6 +3130,7 @@ if (typeof Slick === "undefined") {
 
       "getCellFromPoint": getCellFromPoint,
       "getCellFromEvent": getCellFromEvent,
+      "getRowFromEvent": getRowFromEvent,
       "getActiveCell": getActiveCell,
       "setActiveCell": setActiveCell,
       "getActiveCellNode": getActiveCellNode,
