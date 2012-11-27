@@ -15,7 +15,8 @@
         "YesNoSelect": YesNoSelectEditor,
         "Checkbox": CheckboxEditor,
         "PercentComplete": PercentCompleteEditor,
-        "LongText": LongTextEditor
+        "LongText": LongTextEditor,
+        "SelectCell": SelectCellEditor
       }
     }
   });
@@ -54,7 +55,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = Slick.Util.getvalue(item, args.column.field) || "";
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -65,7 +66,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state);
     };
 
     this.isValueChanged = function () {
@@ -88,7 +89,7 @@
 
     this.init();
   }
-
+  
   function IntegerEditor(args) {
     var $input;
     var defaultValue;
@@ -116,7 +117,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
+      defaultValue = Slick.Util.getvalue(item, args.column.field);
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -127,7 +128,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state)
     };
 
     this.isValueChanged = function () {
@@ -208,7 +209,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
+      defaultValue = Slick.Util.getvalue(item, args.column.field);
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -219,7 +220,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state)
     };
 
     this.isValueChanged = function () {
@@ -256,7 +257,7 @@
     };
 
     this.loadValue = function (item) {
-      $select.val((defaultValue = item[args.column.field]) ? "yes" : "no");
+      $select.val((defaultValue = Slick.Util.getvalue(item, args.column.field)) ? "yes" : "no");
       $select.select();
     };
 
@@ -265,7 +266,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state)
     };
 
     this.isValueChanged = function () {
@@ -302,7 +303,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
+      defaultValue = Slick.Util.getvalue(item, args.column.field);
       if (defaultValue) {
         $select.attr("checked", "checked");
       } else {
@@ -315,7 +316,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state === "checked" || state === true )
     };
 
     this.isValueChanged = function () {
@@ -374,7 +375,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      $input.val(defaultValue = Slick.Util.getvalue(item, args.column.field));
       $input.select();
     };
 
@@ -383,7 +384,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state);
     };
 
     this.isValueChanged = function () {
@@ -484,7 +485,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      $input.val(defaultValue = Slick.Util.getvalue(item, args.column.field));
       $input.select();
     };
 
@@ -493,7 +494,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      Slick.Util.setvalue(item, args.column.field, state);
     };
 
     this.isValueChanged = function () {
@@ -509,4 +510,64 @@
 
     this.init();
   }
+
+
+  function SelectCellEditor(args){
+    var $select, defaultValue,
+      scope = this;
+
+    this.init = function() {
+      var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
+      if (options){
+        var option_str = "";
+        for( i in options ){
+          v = options[i];
+          option_str += "<OPTION value='"+(v.key || v.id)+"'>"+(v.value ||v.label)+"</OPTION>";
+        }
+        $select = $("<SELECT tabIndex='0' class='editor-select'>"+ option_str +"</SELECT>");
+        $select.appendTo(args.container);
+        $select.focus();
+      }
+    };
+
+    this.destroy = function() {
+      $select.remove();
+    };
+
+    this.focus = function() {
+      $select.focus();
+    };
+
+    this.loadValue = function(item) {
+      defaultValue = Slick.Util.getvalue(item, args.column.field);
+      $select.val(defaultValue);
+    };
+
+    this.serializeValue = function() {
+      if(args.column.options){
+        return $select.val();
+      }
+      else {
+        return ($select.val() == "yes");
+      }
+    };
+
+    this.applyValue = function(item,state) {
+        Slick.Util.setvalue(item, args.column.field, state);
+    };
+
+    this.isValueChanged = function() {
+        return ($select.val() != defaultValue);
+    };
+
+    this.validate = function() {
+        return {
+            valid: true,
+            msg: null
+        };
+    };
+
+    this.init();
+  }
+  
 })(jQuery);

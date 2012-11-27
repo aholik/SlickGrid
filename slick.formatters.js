@@ -12,7 +12,8 @@
         "PercentComplete": PercentCompleteFormatter,
         "PercentCompleteBar": PercentCompleteBarFormatter,
         "YesNo": YesNoFormatter,
-        "Checkmark": CheckmarkFormatter
+        "Checkmark": CheckmarkFormatter,
+        "ReferenceValue": ReferenceValueFormatter
       }
     }
   });
@@ -51,5 +52,26 @@
 
   function CheckmarkFormatter(row, cell, value, columnDef, dataContext) {
     return value ? "<img src='../images/tick.png'>" : "";
+  }
+
+  function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
+    var options = typeof columnDef.options === 'function' ? columnDef.options() : args.column.options;
+
+    var value = ko.utils.unwrapObservable(value);
+
+    if (options){
+      var match;
+      for(var i in options){
+        if (options[i].id == value || options[i].key == value){
+          match = options[i];
+          break;
+        }
+      }
+
+      if (match){
+        return match.value || match.label || value;
+      }
+    }
+    return value;
   }
 })(jQuery);

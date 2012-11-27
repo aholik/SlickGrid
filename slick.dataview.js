@@ -93,7 +93,7 @@
       startingIndex = startingIndex || 0;
       var id;
       for (var i = startingIndex, l = items.length; i < l; i++) {
-        id = items[i][idProperty];
+        id = Slick.Util.getvalue(items[i], idProperty);
         if (id === undefined) {
           throw "Each data element must implement a unique 'id' property";
         }
@@ -104,7 +104,7 @@
     function ensureIdUniqueness() {
       var id;
       for (var i = 0, l = items.length; i < l; i++) {
-        id = items[i][idProperty];
+        id = Slick.Util.getvalue(items[i], idProperty);
         if (id === undefined || idxById[id] !== i) {
           throw "Each data element must implement a unique 'id' property";
         }

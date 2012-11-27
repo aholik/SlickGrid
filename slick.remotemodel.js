@@ -1,4 +1,8 @@
 (function ($) {
+  var defaults = {
+    pagesize: 50
+  };
+
   function RemoteModel(options) {
     options = options || {};
     var
@@ -16,13 +20,11 @@
     queryStringSep = urlSplit[urlSplit.length-1].indexOf('?') > -1 ? '&' : '?';
 
     // events
-    var onDataLoading = new Slick.Event();
-    var onDataLoaded = new Slick.Event();
-    var onDataLoadError = new Slick.Event();
-    var onDataLoadAbort = new Slick.Event();
-
-    function init() {
-    }
+    var
+      onDataLoading = new Slick.Event(),
+      onDataLoaded = new Slick.Event(),
+      onDataLoadError = new Slick.Event(),
+      onDataLoadAbort = new Slick.Event();
 
     function isDataLoaded(from, to) {
       for (var i = from; i <= to; i++) {
@@ -170,11 +172,10 @@
       clear();
     }
 
-    init();
-
     return {
       // properties
       "data": data,
+      "defaults": defaults,
 
       // methods
       "clear": clear,
