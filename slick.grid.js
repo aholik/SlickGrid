@@ -1309,13 +1309,14 @@ if (typeof Slick === "undefined") {
       var metadata = data.getItemMetadata && data.getItemMetadata(row);
 
       if (metadata && metadata.cssClasses) {
-        rowCss += " " + metadata.cssClasses;
+        rowCss += " " + ( typeof metadata.cssClasses === 'function' ? metadata.cssClasses(row) : metadata.cssClasses);
       }
 
       stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
+
         m = columns[i];
         colspan = 1;
         if (metadata && metadata.columns) {
@@ -1364,12 +1365,16 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      stringArray.push("<div class='" + cellCss + "'>");
+      stringArray.push("<div class='" + cellCss + "'" + ( m.useCellToolTip && d ? " title='[cellToolTip]'" : "" ) + ">");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (d) {
         var value = getDataItemValueForColumn(d, m);
-        stringArray.push(getFormatter(row, m)(row, cell, value, m, d));
+        var formattedValue = getFormatter(row, m)(row, cell, value, m, d);
+        if (m.useCellToolTip){
+          stringArray[stringArray.length-1] = stringArray[stringArray.length-1].replace('[cellToolTip]', formattedValue);
+        }
+        stringArray.push(formattedValue);
       }
 
       stringArray.push("</div>");
