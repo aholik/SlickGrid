@@ -9,11 +9,14 @@
   $.extend(true, window, {
     "Slick": {
       "Formatters": {
+        "Chain": Chain,
         "PercentComplete": PercentCompleteFormatter,
         "PercentCompleteBar": PercentCompleteBarFormatter,
         "YesNo": YesNoFormatter,
         "Checkmark": CheckmarkFormatter,
-        "ReferenceValue": ReferenceValueFormatter
+        "ReferenceValue": ReferenceValueFormatter,
+        "LinkFormatter": LinkFormatter,
+        "DateFormatter": DateFormatter
       }
     }
   });
@@ -56,8 +59,7 @@
 
   function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
     var options = typeof columnDef.options === 'function' ? columnDef.options() : args.column.options;
-
-    var value = ko.utils.unwrapObservable(value);
+    value = ko.utils.unwrapObservable(value);
 
     if (options){
       var match;
@@ -74,4 +76,64 @@
     }
     return value;
   }
+
+  /*
+   *  utility for chaining formatters
+   */
+  function Chain(){
+    var formatters = Array.prototype.slice.call(arguments);
+
+    return function(row, cell, value, columnDef, dataContext){
+      var val = value;
+      for(var i in formatters){
+        val = formatters[i](row, cell, val, columnDef, dataContext);
+      }
+      return val;
+    };
+  }
+
+  /*
+   * Presents data as href by substituting 
+   * url template with values 
+   */
+  function LinkFormatter(options){
+    var urlTemplate = typeof options === 'string' ? options : options.urlTemplate;
+    var matches = urlTemplate.match(/:(\w+)/g);
+    var splatParams = [], i, result, val;
+
+    for(i in matches){
+      splatParams.push(matches[i].substring(1));
+    }
+
+    var len = splatParams.length;
+
+    return function(row, cell, value, columnDef, dataContext){
+      result = urlTemplate;
+      for(i=0; i<len; i++){
+        val = dataContext[splatParams[i]];
+        if ( typeof val !== null ){
+          result = result.replace(':'+splatParams[i], val);
+        }
+      }
+      return (typeof value !== 'undefined' && value !== null) ? ('<a href="'+result+'">' + value + '</a>') : null;
+    };
+  }
+
+  /*
+   *  depends on Moment.js 
+   *  (http://momentjs.com/)
+   */
+  function DateFormatter(options){
+    var hasMoment = typeof moment !== 'undefined';
+
+    return function(row, cell, value, columnDef, dataContext){
+      if (!hasMoment) return value;
+
+      if (value && options && options.format){
+        return moment(value).format(options.format);
+      }
+      return '';
+    };
+  }
+
 })(jQuery);
