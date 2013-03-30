@@ -303,7 +303,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = Slick.Util.getvalue(item, args.column.field);
+      defaultValue = !!item[args.column.field];
       if (defaultValue) {
         $select.attr("checked", "checked");
       } else {
@@ -312,15 +312,15 @@
     };
 
     this.serializeValue = function () {
-      return $select.attr("checked");
+      return !!$select.attr("checked");
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state === "checked" || state === true )
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
-      return ($select.attr("checked") != defaultValue);
+      return (this.serializeValue() !== defaultValue);
     };
 
     this.validate = function () {
@@ -375,7 +375,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = Slick.Util.getvalue(item, args.column.field));
+      $input.val(defaultValue = item[args.column.field]);
       $input.select();
     };
 
@@ -384,7 +384,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state);
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -446,10 +446,10 @@
         scope.cancel();
       } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
         e.preventDefault();
-        grid.navigatePrev();
+        args.grid.navigatePrev();
       } else if (e.which == $.ui.keyCode.TAB) {
         e.preventDefault();
-        grid.navigateNext();
+        args.grid.navigateNext();
       }
     };
 
@@ -485,7 +485,7 @@
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = Slick.Util.getvalue(item, args.column.field));
+      $input.val(defaultValue = item[args.column.field]);
       $input.select();
     };
 
@@ -494,7 +494,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state);
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
