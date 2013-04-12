@@ -8,23 +8,30 @@
 
 
   function CheckboxSelectColumn(options) {
-    var _grid;
-    var _self = this;
-    var _handler = new Slick.EventHandler();
-    var _selectedRowsLookup = {};
-    var _defaults = {
-      columnId: "_checkbox_selector",
-      cssClass: null,
-      toolTip: "Select/Deselect All",
-      width: 30
-    };
+    var 
+      _grid,
+      _self = this,
+      _handler = new Slick.EventHandler(),
+      _selectedRows = {},
+      _defaults = {
+        columnId: "_checkbox_selector",
+        cssClass: null,
+        toolTip: "Select/Deselect All",
+        width: 30,
+        rowselector: true   // is it a column for grid row selection
+      },
+      _options = $.extend(true, {}, _defaults, options)
 
-    var _options = $.extend(true, {}, _defaults, options);
+    var selectionChanged = new Slick.Event();
 
     function init(grid) {
       _grid = grid;
+      
+      if (_options.rowselector === true){
+        _handler.subscribe(_grid.onSelectedRowsChanged, handleSelectedRowsChanged);
+      }
+      
       _handler
-        .subscribe(_grid.onSelectedRowsChanged, handleSelectedRowsChanged)
         .subscribe(_grid.onClick, handleClick)
         .subscribe(_grid.onHeaderClick, handleHeaderClick)
         .subscribe(_grid.onKeyDown, handleKeyDown);
@@ -34,31 +41,46 @@
       _handler.unsubscribeAll();
     }
 
+    /**
+     *  grid selected rows changed handler
+     */
     function handleSelectedRowsChanged(e, args) {
-      var selectedRows = _grid.getSelectedRows();
-      var lookup = {}, row, i;
-      for (i = 0; i < selectedRows.length; i++) {
-        row = selectedRows[i];
+      var 
+        selection = _grid.getSelectedRows(),
+        lookup = {}, row, i, 
+        tx_args = {};  //eventargs to transmit
+
+      for (i = 0, len=selection.length; i < len; i++) {
+        row = selection[i];
         lookup[row] = true;
-        if (lookup[row] !== _selectedRowsLookup[row]) {
+               
+        // it was not selected
+        if (typeof _selectedRows[row] === 'undefined'){  
+          (tx_args.add || (tx_args.add = [])).push(row);
           _grid.invalidateRow(row);
-          delete _selectedRowsLookup[row];
         }
+        delete _selectedRows[row];
       }
-      for (i in _selectedRowsLookup) {
+      
+      // the remaining contains the deleted items
+      for (i in _selectedRows) {
         _grid.invalidateRow(i);
+        (tx_args.del || (tx_args.del = [])).push( _selectedRows[i] );
       }
-      _selectedRowsLookup = lookup;
+      _selectedRows = lookup;
       _grid.render();
 
-      if (selectedRows.length && selectedRows.length == _grid.getDataLength()) {
+      if (selection.length == _grid.getDataLength()) {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox' checked='checked'>", _options.toolTip);
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
       }
+      
+      selectionChanged.notify(tx_args);
     }
 
     function handleKeyDown(e, args) {
+    
       if (e.which == 32) {
         if (_grid.getColumns()[args.cell].id === _options.columnId) {
           // if editing, try to commit
@@ -72,7 +94,7 @@
     }
 
     function handleClick(e, args) {
-      // clicking on a row select checkbox
+      // clicking on a row selects checkbox
       if (_grid.getColumns()[args.cell].id === _options.columnId && $(e.target).is(":checkbox")) {
         // if editing, try to commit
         if (_grid.getEditorLock().isActive() && !_grid.getEditorLock().commitCurrentEdit()) {
@@ -88,12 +110,14 @@
     }
 
     function toggleRowSelection(row) {
-      if (_selectedRowsLookup[row]) {
-        _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
-          return n != row
-        }));
-      } else {
-        _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
+      if (_options.rowselector !== false){
+        if (_selectedRows[row]) {
+          _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
+            return n != row
+          }));
+        } else {
+          _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
+        }
       }
     }
 
@@ -136,7 +160,7 @@
 
     function checkboxSelectionFormatter(row, cell, value, columnDef, dataContext) {
       if (dataContext) {
-        return _selectedRowsLookup[row]
+        return _selectedRows[row]
             ? "<input type='checkbox' checked='checked'>"
             : "<input type='checkbox'>";
       }
@@ -147,7 +171,8 @@
       "init": init,
       "destroy": destroy,
 
-      "getColumnDefinition": getColumnDefinition
+      "getColumnDefinition": getColumnDefinition,
+      "selectionChanged": selectionChanged
     });
   }
 })(jQuery);

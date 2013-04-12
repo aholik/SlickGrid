@@ -10,7 +10,7 @@
     var localStorage = window.localStorage;
 
     if (typeof localStorage === 'undefined'){
-      console.error('localstorage is not available. slickgrid statepersistor won\'t work!');
+      console.error('localstorage is not available. slickgrid statepersistor disabled.');
     }
 
     return {
@@ -26,7 +26,7 @@
       },
       set: function(key, obj){
         if (!localStorage) return;
-        console.log("persisting", obj);
+        //console.log("persisting", obj);
         if (obj){
           obj = JSON.stringify(obj);
         }
@@ -47,12 +47,16 @@
       _store = options.storage;
 
     function init(grid) {
-      console.log("statepersistor init");
       _grid = grid;
       _cid = grid.cid || options.cid;
-      grid.onColumnsResized.subscribe(save);
-      grid.onColumnsReordered.subscribe(save);
-      grid.onSort.subscribe(save);
+      if (_cid){
+        grid.onColumnsResized.subscribe(save);
+        grid.onColumnsReordered.subscribe(save);
+        grid.onSort.subscribe(save);
+      }
+      else {
+        console.warn("grid has no client id. state persisting is disabled.");
+      }
     }
 
     function destroy() {
@@ -103,7 +107,7 @@
     function getColumns(){
       var cols = _grid.getColumns();
 
-      console.log(cols);
+      //console.log(cols);
       return cols;
       /*
       var result = [];

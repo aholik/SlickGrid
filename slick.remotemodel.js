@@ -9,21 +9,19 @@
     "responseItemsCountMemberName":     "count",
     "responseOffsetMemberName":         "offset",
     "responseLimitMemberName":          "limit",
-    "responseIdentitiesMemberName":     "identities",
-    "adapter": new PagingAdapter()
+    "responseIdentitiesMemberName":     "identities"
   };
 
   function PagingAdapter(options){
-    options = $.extend({}, defaults, options);
-
+    options = $.extend(true, {}, defaults, options);
     return {
-      dataLoaded: function(resp){
+      dataLoaded: function(req, res){
         var 
-          items = resp[options.responseItemsMemberName],
+          items = res[options.responseItemsMemberName],
           from = req.fromPage * options.pagesize,
           to = from + items.length,
           count = items.length,
-          total = parseInt(resp[options.responseTotalCountMemberName], 10);
+          total = parseInt(res[options.responseTotalCountMemberName], 10);
 
         return {
           items: items,
@@ -31,7 +29,7 @@
           to: to,
           count: count,
           total: total,
-          identities: resp[options.responseItemsMemberName]
+          identities: res[options.responseItemsMemberName]
         };
       }
     };
@@ -39,21 +37,32 @@
 
   function ArrayAdapter(options){
     return {
-      dataLoaded: function(resp){
+      dataLoaded: function(req, res){
         return {
-          items: resp,
+          items: res,
           from: 0,
-          to: resp.lenth,
-          count: resp.length,
-          total: resp.length
+          to: res.lenth,
+          count: res.length,
+          total: res.length
         };
       }
     };
   }
 
 
+  /*
+    
+    data provider api: {
+      getItem,
+      getLength / length if array
+      getItemMetadata
+    }
+
+
+  */
+
   function RemoteModel(options) {
-    options = $.extend({}, defaults, options);
+    options = $.extend({ adapter: new PagingAdapter() }, defaults, options);
     var
       _slickgrid,
       _lastRequestOptions,
@@ -88,6 +97,7 @@
     }
 
     function clear() {
+      //console.log("RemoteModel clear()");
       for (var key in data) {
         delete data[key];
       }
@@ -96,6 +106,14 @@
 
 
     function ensureData(from, to, ajaxOptions, force) {
+      var args = Array.prototype.slice.call(arguments);
+      if (args.length){
+        if (args.pop() === true){
+          force = true;
+        }
+      }
+
+      //console.log("RemoteModel ensureData()");
       ajaxOptions = ajaxOptions || {};
       
       // calculating pages
@@ -199,10 +217,10 @@
       });
     }
 
-    function onSuccess(resp) {
+    function onSuccess(res) {
       //Solution to keep the data array bounded to pagesize + window: Call the clear method to have only 2*PAGESIZE elements in the data array at any given point
       clear();
-      var tx = options.adapter.dataLoaded(resp);
+      var tx = options.adapter.dataLoaded(req, res);
 
       data.length = tx.total;
 
@@ -237,7 +255,7 @@
     function setSort(column, dir) {
       sortcol = column;
       sortdir = dir;
-      clear();
+      //clear();
     }
 
     function setSearch(str) {
@@ -314,5 +332,5 @@
   // Slick.Data.RemoteModel
   RemoteModel.PagingAdapter = PagingAdapter;
   RemoteModel.ArrayAdapter = ArrayAdapter; 
-  $.extend(true, window, { Slick: { Data: { RemoteModel2: RemoteModel }}});
+  $.extend(true, window, { Slick: { Data: { RemoteModel: RemoteModel }}});
 })(jQuery);
