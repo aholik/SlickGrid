@@ -10,6 +10,7 @@
     "Slick": {
       "Formatters": {
         "Chain": Chain,
+        "Concatenator": Concatenator,
         "PercentComplete": PercentCompleteFormatter,
         "PercentCompleteBar": PercentCompleteBarFormatter,
         "YesNo": YesNoFormatter,
@@ -133,6 +134,25 @@
         return moment(value).format(options.format);
       }
       return '';
+    };
+  }
+
+  function Concatenator(fields, separator){
+    if (typeof separator === 'undefined'){ separator = ' '; }
+    if (typeof fields === 'string'){
+      fields = fields.split(',');
+    }
+    var len = fields.length, data;
+
+    return function(row, cell, value, columnDef, dataContext){
+      var result = [];
+      for(var i=0; i<len; i++){
+        data = dataContext[ fields[i] ];
+        if (data){
+          result.push(data);
+        }
+      }
+      return result.join(separator);
     };
   }
 

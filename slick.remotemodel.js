@@ -64,20 +64,21 @@
   function RemoteModel(options) {
     options = $.extend({ adapter: new PagingAdapter() }, defaults, options);
     var
-      _slickgrid,
-      _lastRequestOptions,
+      _data = { length: 0 },
+      _grid,
+      _lastQueryParams,
       _identities,
-      data = { length: 0 },
-      searchstr, sortcol, sortdir = 1,
+      _sortCols = [],
+      _filters = [],
       _ajaxOptions = options.ajaxOptions || {},
-      urlRoot = options.url,
-      url,
-      queryStringSep,
+      _url = options.url,
+      _query = options.query || {},
+      //queryStringSep,
       h_request,
       req; // ajax request
 
-    var urlSplit = urlRoot.split('/');
-    queryStringSep = urlSplit[urlSplit.length-1].indexOf('?') > -1 ? '&' : '?';
+    //var urlSplit = urlRoot.split('/');
+    //queryStringSep = urlSplit[urlSplit.length-1].indexOf('?') > -1 ? '&' : '?';
 
     // events
     var
@@ -86,10 +87,9 @@
       onDataLoadError = new Slick.Event(),
       onDataLoadAbort = new Slick.Event();
 
-
     function isDataLoaded(from, to) {
       for (var i = from; i <= to; i++) {
-        if (data[i] === undefined || data[i] === null) {
+        if (_data[i] === undefined || _data[i] === null) {
           return false;
         }
       }
@@ -97,80 +97,97 @@
     }
 
     function clear() {
-      //console.log("RemoteModel clear()");
-      for (var key in data) {
-        delete data[key];
+      for (var key in _data) {
+        delete _data[key];
       }
-      data.length = 0;
+      _data.length = 0;
+    }
+
+    function refresh(){
+      var vp = _grid.getViewport();
+      ensureData({ 
+        from: vp.top, 
+        to: vp.bottom, 
+        force: true
+      });
     }
 
 
-    function ensureData(from, to, ajaxOptions, force) {
-      var args = Array.prototype.slice.call(arguments);
-      if (args.length){
-        if (args.pop() === true){
-          force = true;
-        }
-      }
+    function setQuery(obj){
+      _query = obj;
+    }
 
-      //console.log("RemoteModel ensureData()");
-      ajaxOptions = ajaxOptions || {};
+    function addQuery(obj){
+      _query = $.extend(true, _query, obj);
+    }
+
+    function clearQuery(){
+      setQuery({});
+    }
+
+
+    /**
+      * from, to, ajaxOptions, force
+      */
+    function ensureData(opts) {
+      opts = opts || {};
       
       // calculating pages
-      from = Math.max(0, from);
       var 
-        fromPage = Math.floor(from / options.pagesize),
-        toPage = Math.floor(to / options.pagesize);
+        fromPage = Math.floor(Math.max(0, opts.from) / options.pagesize),
+        toPage = Math.floor(opts.to / options.pagesize);
 
-      while (data[fromPage * options.pagesize] !== undefined && fromPage < toPage){
+      while (typeof _data[fromPage * options.pagesize] !== 'undefined' && fromPage < toPage){
         fromPage++;
       }
 
-      while (data[toPage * options.pagesize] !== undefined && fromPage < toPage){
+      while (typeof _data[toPage * options.pagesize] !== 'undefined' && fromPage < toPage){
         toPage--;
       }
 
-      if (fromPage > toPage || ((fromPage == toPage) && data[fromPage * options.pagesize] !== undefined) && (force !== true) ) {
+      if (fromPage > toPage 
+        || ((fromPage == toPage) && typeof _data[fromPage * options.pagesize] !== 'undefined')
+        && (opts.force !== true) ) {
         // TODO:  look-ahead
         return;
       }
-      
-      // ------------------------------
-      // hack to ensure not bombing server with the same requests
-      var fullOpts = $.extend(true,{}, ajaxOptions, { from: fromPage, to: toPage, search: searchstr });
-      if (!force && _.isEqual(fullOpts, _lastRequestOptions)){
-        return false;
-      }
-      _lastRequestOptions = fullOpts;
-      // ------------------------------
-      
+           
       // it there's a running request we cancel it. TODO: not cancel but save the result
       if (req) {
         req.abort();
-        for (var i = req.fromPage; i <= req.toPage; i++)
-          data[i * options.pagesize] = undefined;
+        for (var i = req.fromPage; i <= req.toPage; i++){
+          delete _data[i * options.pagesize];
+        }
       }
       
       // building query
-      var queryParams = {};
+      var queryParams = $.extend(true, {}, {
+        $skip: fromPage * options.pagesize,
+        $top: ((toPage - fromPage) * options.pagesize) + options.pagesize
+      }, _query);
 
-      if (searchstr){
-        queryParams.query = searchstr;
+      if (_sortCols && _sortCols.length){
+        var order = '', current;
+        for(var i=0; i<_sortCols.length; i++){
+          current = _sortCols[i];
+          order += (i>0 ? ',' : '') + current.field;
+          if ( i === _sortCols.length-1
+            || (i<_sortCols.length-1 && _sortCols[i+1].dir !== current.dir)){
+            order += current.dir === 1 ? ' asc' : ' desc';
+          }
+        }
+        queryParams.$orderby = order;
       }
-      // further flter query parameters:
-      $.extend(queryParams, ajaxOptions.filter);
 
-      // paging
-      queryParams.$skip = fromPage * options.pagesize;
-      queryParams.$top = ((toPage - fromPage) * options.pagesize) + options.pagesize;
+      // ------------------------------
+      // hack to ensure not bombing server with the same requests
+      if (!opts.force && _.isEqual(queryParams, _lastQueryParams)){
+        return false;
+      }
+      _lastQueryParams = queryParams;
+      // ------------------------------
 
-      /* TODO: sorting
-      utils.each(_sortOptions, function(s){
-        queryParams['s__'+s.field] = s.direction === 'asc' ? 1 : -1;
-      });
-      */
-      
-      url = urlRoot + '?' + $.param(queryParams).replace(/\%24/g, '$');
+      url = _url + '?' + $.param(queryParams).replace(/\%24/g, '$');
 
       if (h_request !== null) {
         clearTimeout(h_request);
@@ -178,10 +195,10 @@
 
       h_request = setTimeout(function(){
         for (var i = fromPage; i <= toPage; i++) {
-          data[i * options.pagesize] = null; // null indicates a 'requested but not available yet'
+          _data[i * options.pagesize] = null; // null indicates a 'requested but not available yet'
         }
 
-        onDataLoading.notify({from: from, to: to});
+        onDataLoading.notify({from: opts.from, to: opts.to});
 
         req = $.ajax({
           url: url,
@@ -221,12 +238,11 @@
       //Solution to keep the data array bounded to pagesize + window: Call the clear method to have only 2*PAGESIZE elements in the data array at any given point
       clear();
       var tx = options.adapter.dataLoaded(req, res);
-
-      data.length = tx.total;
+      _data.length = tx.total;
 
       for (var i = 0; i < tx.count; i++) {
-        data[tx.from + i] = tx.items[i];
-        data[tx.from + i].index = tx.from + i;
+        _data[tx.from + i] = tx.items[i];
+        _data[tx.from + i].index = tx.from + i;
       }
 
       _identities = tx.identities;
@@ -243,26 +259,6 @@
     }
 
 
-    function reloadData(from, to) {
-      for (var i = from; i <= to; i++){
-        delete data[i];
-      }
-
-      ensureData(from, to, options);
-    }
-
-
-    function setSort(column, dir) {
-      sortcol = column;
-      sortdir = dir;
-      //clear();
-    }
-
-    function setSearch(str) {
-      searchstr = str;
-      clear();
-    }
-
     function getIdentities(){
       return _identities;
     }
@@ -272,53 +268,72 @@
      *  Plugin
      */
     function init(slickgrid){
-      _slickgrid = slickgrid;
-      slickgrid.onViewportChanged.subscribe(onGridViewportChanged);
+      _grid = slickgrid;
+      slickgrid.onViewportChanged.subscribe(refresh);
       slickgrid.onSort.subscribe(onGridSort);
       onDataLoaded.subscribe(updatreGridOnDataLoaded);
     }
 
     function destroy(){
       onDataLoaded.unsubscribe(updatreGridOnDataLoaded);
-      _slickgrid.onSort.unsubscribe(onGridSort);
-      _slickgrid.onViewportChanged.unsubscribe(onGridViewportChanged);
-    }
-
-    function onGridViewportChanged(){
-      var vp = _slickgrid.getViewport();
-      ensureData(vp.top, vp.bottom);
+      _grid.onSort.unsubscribe(onGridSort);
+      _grid.onViewportChanged.unsubscribe(onGridViewportChanged);
     }
 
     function onGridSort(e, args){
-      setSort(args.sortCol.field, args.sortAsc ? 1 : -1);
-      var vp = _slickgrid.getViewport();
-      ensureData(vp.top, vp.bottom);
+      var 
+        result = [], column,
+        cols = _grid.getColumns(),
+        sortCols = _grid.getSortColumns();
+
+      $.each(sortCols, function(k,col){
+        column = cols[_grid.getColumnIndex(col.columnId)];
+
+        var direction = col.sortAsc ? 1 : -1
+        if (column.order_fields){
+          $.each(column.order_fields, function(k,v){
+            result.push({
+              "field": v,
+              "dir": direction
+            });
+          });
+        }
+        else {
+          result.push({
+            "field": column.field,
+            "dir": direction
+          });
+        }
+      });
+      _sortCols = result;
+      refresh();
     }
 
     function updatreGridOnDataLoaded(e,args){
       for (var i = args.from; i <= args.to; i++) {
-        _slickgrid.invalidateRow(i);
+        _grid.invalidateRow(i);
       }
-      _slickgrid.updateRowCount();
-      _slickgrid.render();
+      _grid.updateRowCount();
+      _grid.render();
     }
-
-
 
     return {
       // properties
-      "data": data,
+      "data": _data,
       "defaults": defaults,
 
       // methods
       "clear": clear,
       "init": init,
       "isDataLoaded": isDataLoaded,
+      "refresh": refresh,
       "ensureData": ensureData,
-      "reloadData": reloadData,
-      "setSort": setSort,
-      "setSearch": setSearch,
+      //"reloadData": reloadData,
       "getIdentities": getIdentities,
+      
+      "setQuery": setQuery,
+      "addQuery": addQuery,
+      "clearQuery": clearQuery,
 
       // events
       "onDataLoading": onDataLoading,
@@ -328,9 +343,16 @@
     };
   }
 
+  function ODataSortAdapter(argument){
+
+  }
+
 
   // Slick.Data.RemoteModel
   RemoteModel.PagingAdapter = PagingAdapter;
   RemoteModel.ArrayAdapter = ArrayAdapter; 
-  $.extend(true, window, { Slick: { Data: { RemoteModel: RemoteModel }}});
+  $.extend(true, window, { Slick: { Data: { 
+    RemoteModel: RemoteModel,
+    ODataSortAdapter: ODataSortAdapter
+  }}});
 })(jQuery);
