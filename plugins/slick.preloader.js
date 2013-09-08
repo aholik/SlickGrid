@@ -13,6 +13,7 @@
 
     function init(grid) {
       _grid = grid;
+      return this;
     }
 
     function destroy() { }
@@ -36,10 +37,12 @@
 
     function show(){
       getPreloader(true).show();
+      return this;
     }
 
     function hide(){
       getPreloader().fadeOut();
+      return this;
     }
 
 
