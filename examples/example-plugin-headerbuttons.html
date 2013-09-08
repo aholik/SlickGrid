@@ -18,6 +18,10 @@
     .negative-highlight {
       background: red;
     }
+
+    .slick-header-column.filtered{
+      background: yellow;      
+    }
   </style>
 </head>
 <body>
@@ -27,10 +31,13 @@
   </div>
 
   <div class="options-panel">
+    <h2>About</h2>
     <p>
       This example demonstrates using the <b>Slick.Plugins.HeaderButtons</b> plugin to easily add buttons to column
       headers.  These buttons can be specified directly in the column definition, and are very easy to configure and use.
     </p>
+    <h2>Controls</h2>
+    <button onclick="toggleShowHideHeaderButton()">Toggle third column header</button>
   </div>
 </div>
 
@@ -109,6 +116,20 @@
   };
 
 
+  //Set a button on the third column to demonstrate how to manipulate it programatically
+  columns[2].name = "programatically";
+  //columns[2].headerCssClass = "filtered";
+  columns[2].header = {
+    buttons: [
+      {
+        image: "../images/comment_yellow.gif",
+        tooltip: "Some initial value",
+        command: 'remove-filter'
+      }
+    ]
+  };
+
+
 
   // Set up some test data.
   for (var i = 0; i < 100; i++) {
@@ -128,10 +149,21 @@
     }
   }
 
+  function toggleShowHideHeaderButton(){
+
+  }
+
+
+
 
 
   $(function () {
     grid = new Slick.Grid("#myGrid", data, columns, options);
+
+    function toggleColumnHeaderCssClass(columnId, cssClass){
+      var headers = $('#myGrid .slick-header-columns').get(0).children;
+      $( headers[ grid.getColumnIndex(columnId) ] ).toggleClass(cssClass);
+    }
 
     var headerButtonsPlugin = new Slick.Plugins.HeaderButtons();
 
@@ -152,6 +184,11 @@
         }
 
         grid.invalidate();
+      }
+
+      if (command == "remove-filter"){
+        console.log(column);
+        toggleColumnHeaderCssClass(column.id, "filtered");
       }
     });
 
