@@ -55,7 +55,7 @@
   var grid;
   var data = [];
   var options = {
-    enableCellNavigation:true
+    enableCellNavigation: true
   };
   var columns = [];
   var columnsWithHighlightingById = {};
@@ -68,6 +68,7 @@
       name: String.fromCharCode("A".charCodeAt(0) + i),
       field: i,
       width: 90,
+      sortable: true,
       formatter: highlightingFormatter,
       header: {
         buttons: [
