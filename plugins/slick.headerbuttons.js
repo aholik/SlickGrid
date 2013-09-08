@@ -89,6 +89,7 @@
 
 
     function handleHeaderCellRendered(e, args) {
+      console.log("handleHeaderCellRendered");
       var column = args.column;
 
       if (column.header && column.header.buttons) {
@@ -96,6 +97,7 @@
         var i = column.header.buttons.length;
         while (i--) {
           var button = column.header.buttons[i];
+          if (button.hide === true) continue;
           var btn = $("<div></div>")
             .addClass(options.buttonCssClass)
             .data("column", column)

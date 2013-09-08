@@ -20,7 +20,7 @@
     }
 
     .slick-header-column.filtered{
-      background: yellow;      
+      background: #D8E2FF;      
     }
   </style>
 </head>
@@ -37,7 +37,7 @@
       headers.  These buttons can be specified directly in the column definition, and are very easy to configure and use.
     </p>
     <h2>Controls</h2>
-    <button onclick="toggleShowHideHeaderButton()">Toggle third column header</button>
+    <button onclick="toggleShowHideHeaderButton()">Toggle `Dynamic` column header</button>
   </div>
 </div>
 
@@ -49,6 +49,7 @@
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
+<script src="../slick.extensions.js"></script>
 <script src="../plugins/slick.headerbuttons.js"></script>
 
 <script>
@@ -118,14 +119,14 @@
 
 
   //Set a button on the third column to demonstrate how to manipulate it programatically
-  columns[2].name = "programatically";
-  //columns[2].headerCssClass = "filtered";
+  columns[2].name = "Dynamic";
   columns[2].header = {
     buttons: [
       {
-        image: "../images/comment_yellow.gif",
+        image: "../images/filter.png",
         tooltip: "Some initial value",
-        command: 'remove-filter'
+        command: 'remove-filter',
+        hide: true
       }
     ]
   };
@@ -150,23 +151,35 @@
     }
   }
 
-  function toggleShowHideHeaderButton(){
-
-  }
-
-
-
-
-
-  $(function () {
+  $(function(){
     grid = new Slick.Grid("#myGrid", data, columns, options);
 
-    function toggleColumnHeaderCssClass(columnId, cssClass){
-      var headers = $('#myGrid .slick-header-columns').get(0).children;
-      $( headers[ grid.getColumnIndex(columnId) ] ).toggleClass(cssClass);
-    }
-
     var headerButtonsPlugin = new Slick.Plugins.HeaderButtons();
+
+    window.toggleShowHideHeaderButton = function(){
+      var col = columns[2];
+      var tmp = col.is_filtered ? hideColumnFilterDisplay(col) : showColumnFilterDisplay(col);
+    };
+
+
+    function showColumnFilterDisplay(column){
+      grid.addColumnHeaderCssClass(column.id, "filtered");
+      column.header.buttons[0].hide = false;
+      column.header.buttons[0].tooltip = "Click to remove filter";
+      column.headerCssClass = "filtered";
+      column.is_filtered = true;
+      grid.invalidate();
+      grid.updateColumnHeader(column.id);
+    }
+    
+    function hideColumnFilterDisplay(column){
+      grid.removeColumnHeaderCssClass(column.id, "filtered");
+      column.header.buttons[0].hide = true;
+      column.headerCssClass = "";
+      column.is_filtered = false;
+      grid.invalidate();
+      grid.updateColumnHeader(column.id);
+    }
 
     headerButtonsPlugin.onCommand.subscribe(function(e, args) {
       var column = args.column;
@@ -188,7 +201,7 @@
       }
 
       if (command == "remove-filter"){
-        toggleColumnHeaderCssClass(column.id, "filtered");
+        hideColumnFilterDisplay(column);
       }
     });
 
