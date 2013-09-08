@@ -3,7 +3,7 @@
  * (c) 2009-2013 Michael Leibman
  * michael{dot}leibman{at}gmail{dot}com
  * http://github.com/mleibman/slickgrid
- *
+ *  
  * Distributed under MIT license.
  * All rights reserved.
  *
@@ -1446,6 +1446,8 @@ if (typeof Slick === "undefined") {
           cellCss += (" " + cellCssClasses[key][row][m.id]);
         }
       }
+
+      var d = getDataItem(row);
 
       stringArray.push("<div class='" + cellCss + "'" + ( m.useCellToolTip && d ? " title='[cellToolTip]'" : "" ) + ">");
 

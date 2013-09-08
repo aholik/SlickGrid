@@ -18,25 +18,27 @@
 
     function destroy() { }
 
-    function getPreloader(toPosition){
-      var $t = $(container);
+    function getPreloader(center){
+      var $grid = $(_grid.getContainerNode());
 
-      if (!this.$p){
-        this.$p = $('<div class="cyc-grid-preloader"><img src="images/preloader-hbar.gif"/></div>').appendTo(document.body);
+      if (!this.$preloader){
+        this.$preloader = $('<div>').addClass('slick-preloader')
+          .append($('<div>').addClass('slick-preloader-inner'))
+          .appendTo($grid);
       }
 
-      if (toPosition){
-        var pos = $t.offset(), height = $t.height(), width = $t.width();
-        this.$p
-          .css("position", "absolute")
-          .css("top", pos.top + height/2 - this.$p.height()/2 )
-          .css("left", pos.left + width/2 - this.$p.width()/2 );
-      }
-      return this.$p;
+      var pos = $grid.offset(), height = $grid.height(), width = $grid.width();
+      var $inner = $grid.find('.slick-preloader-inner');
+      $inner
+        .css("position", "relative")
+        .css("top", height/2 - $inner.height()/2 )
+        .css("left", width/2 - $inner.width()/2 );
+
+      return this.$preloader;
     }
 
     function show(){
-      getPreloader(true).show();
+      getPreloader().show();
       return this;
     }
 

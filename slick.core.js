@@ -24,34 +24,9 @@
        * @static
        * @constructor
        */
-      "GlobalEditorLock": new EditorLock(),
-      "Util": new Util()
+      "GlobalEditorLock": new EditorLock()
     }
   });
-
-  function Util(){
-    var useko = typeof ko !== 'undefined';
-    if (!useko){
-      console.warn("ko is undefined, will be not supported in SlickGrid");
-    }
-
-    return {
-      getvalue: function(item, attr){
-        if (useko && ko.isObservable(item[attr])){
-          return item[attr]();
-        }
-        return item[attr];
-      },
-      setvalue: function(item, attr, value){
-        if (useko && ko.isObservable(item[attr])){
-          item[attr](value);
-        }
-        else {
-          item[attr] = value;
-        }
-      }
-    };
-  }
 
   /***
    * An event object for passing data to event handlers and letting them control propagation.
