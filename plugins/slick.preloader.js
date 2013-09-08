@@ -6,14 +6,14 @@
     }
   });
 
-  function Preloader(container) {
+  function Preloader() {
     var 
-      _self = this,
+      self = this,
       _grid;
 
     function init(grid) {
       _grid = grid;
-      return this;
+      return self;
     }
 
     function destroy() { }
@@ -21,8 +21,8 @@
     function getPreloader(center){
       var $grid = $(_grid.getContainerNode());
 
-      if (!this.$preloader){
-        this.$preloader = $('<div>').addClass('slick-preloader')
+      if (!self.$preloader){
+        self.$preloader = $('<div>').addClass('slick-preloader')
           .append($('<div>').addClass('slick-preloader-inner'))
           .appendTo($grid);
       }
@@ -34,17 +34,17 @@
         .css("top", height/2 - $inner.height()/2 )
         .css("left", width/2 - $inner.width()/2 );
 
-      return this.$preloader;
+      return self.$preloader;
     }
 
     function show(){
       getPreloader().show();
-      return this;
+      return self;
     }
 
     function hide(){
       getPreloader().fadeOut();
-      return this;
+      return self;
     }
 
 
@@ -87,7 +87,7 @@
       loader.onDataLoadAbort.unsubscribe(onLoaderDataLoadAbort);
     }
 
-    $.extend(this, {
+    $.extend(self, {
       "init": init,
       "destroy": destroy,
       "show": show,
