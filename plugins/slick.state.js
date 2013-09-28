@@ -6,28 +6,32 @@
     }
   });
 
-  var lstorage = function(){
+  var localStorageWrapper = function(){
     var localStorage = window.localStorage;
 
     if (typeof localStorage === 'undefined'){
-      console.error('localstorage is not available. slickgrid statepersistor disabled.');
+      console.error('localStorage is not available. slickgrid statepersistor disabled.');
     }
 
     return {
       get: function(key){
-        if (!localStorage) return;
-        try {
-          var d = localStorage.getItem(key);
-          if (d) return JSON.parse(d);
-        }
-        catch(exc) {
-          console.error(exc);
-        }
+        return $.Deferred(function(dfd){
+          if (!localStorage) return dfd.reject("missing localStorage");
+          try {
+            var d = localStorage.getItem(key);
+            if (d) {
+              return dfd.resolve(JSON.parse(d));
+            }
+            dfd.resolve();
+          }
+          catch(exc) {
+            dfd.reject(exc);
+          }
+        });
       },
       set: function(key, obj){
         if (!localStorage) return;
-        //console.log("persisting", obj);
-        if (obj){
+        if (typeof obj !== 'undefined'){
           obj = JSON.stringify(obj);
         }
         localStorage.setItem(key, obj);
@@ -37,14 +41,15 @@
 
   var defaults = {
     key_prefix: "slickgrid:",
-    storage: new lstorage()
+    storage: new localStorageWrapper()
   };
 
   function State(options) {
     options = $.extend(true, {}, defaults, options);
 
     var _grid, _cid,
-      _store = options.storage;
+      _store = options.storage,
+      onStateChanged = new Slick.Event();
 
     function init(grid) {
       _grid = grid;
@@ -74,15 +79,19 @@
           columns: getColumns()
         };
 
+        onStateChanged.notify(state);
+
+
         return _store.set(options.key_prefix + _cid, state);
       }
     }
 
     function restore(){
-      if (_cid && _store){
-        var dfd = $.Deferred();
+      return $.Deferred(function(dfd){
+        if (!_cid) { return dfd.reject("missing client id"); }
+        if (!_store) { return dfd.reject("missing store"); }
 
-        $.when(_store.get(options.key_prefix + _cid))
+        _store.get(options.key_prefix + _cid)
           .then(function success(state){
             if (state){
               if (state.sortcols){
@@ -96,25 +105,13 @@
               }
             }
             dfd.resolve(state);
-          }, function failure(err){
-            dfd.reject(err);
-          });
-
-        return dfd.promise();
-      }
+          }, dfd.reject);
+      });
     }
 
     function getColumns(){
       var cols = _grid.getColumns();
-
-      //console.log(cols);
       return cols;
-      /*
-      var result = [];
-      for(var i in cols){
-        if ()
-      }
-      */
     }
 
     /*
@@ -124,7 +121,8 @@
       "init": init,
       "destroy": destroy,
       "save": save,
-      "restore": restore
+      "restore": restore,
+      "onStateChanged": onStateChanged
     });
   }
 })(jQuery);
