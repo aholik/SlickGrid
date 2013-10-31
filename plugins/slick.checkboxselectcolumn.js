@@ -20,7 +20,7 @@
         width: 30,
         rowselector: true   // is it a column for grid row selection
       },
-      _options = $.extend(true, {}, _defaults, options)
+      _options = $.extend(true, {}, _defaults, options);
 
     var selectionChanged = new Slick.Event();
 
@@ -113,7 +113,7 @@
       if (_options.rowselector !== false){
         if (_selectedRows[row]) {
           _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
-            return n != row
+            return n != row;
           }));
         } else {
           _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
@@ -153,6 +153,8 @@
         width: _options.width,
         resizable: false,
         sortable: false,
+        nofilter: true,
+        hideable: false,
         cssClass: _options.cssClass,
         formatter: checkboxSelectionFormatter
       };
@@ -160,9 +162,7 @@
 
     function checkboxSelectionFormatter(row, cell, value, columnDef, dataContext) {
       if (dataContext) {
-        return _selectedRows[row]
-            ? "<input type='checkbox' checked='checked'>"
-            : "<input type='checkbox'>";
+        return _selectedRows[row] ? "<input type='checkbox' checked='checked'>" : "<input type='checkbox'>";
       }
       return null;
     }

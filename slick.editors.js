@@ -55,7 +55,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = Slick.Util.getvalue(item, args.column.field) || "";
+      defaultValue = item[args.column.field] || "";
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -66,7 +66,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state);
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -117,7 +117,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = Slick.Util.getvalue(item, args.column.field);
+      defaultValue = item[args.column.field] || "";
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -128,7 +128,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state)
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -167,10 +167,10 @@
         buttonImageOnly: true,
         buttonImage: "../images/calendar.gif",
         beforeShow: function () {
-          calendarOpen = true
+          calendarOpen = true;
         },
         onClose: function () {
-          calendarOpen = false
+          calendarOpen = false;
         }
       });
       $input.width($input.width() - 18);
@@ -209,7 +209,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = Slick.Util.getvalue(item, args.column.field);
+      defaultValue = item[args.column.field] || "";
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -220,7 +220,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state)
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -257,7 +257,7 @@
     };
 
     this.loadValue = function (item) {
-      $select.val((defaultValue = Slick.Util.getvalue(item, args.column.field)) ? "yes" : "no");
+      $select.val(defaultValue = item[args.column.field] ? "yes" : "no");
       $select.select();
     };
 
@@ -266,7 +266,7 @@
     };
 
     this.applyValue = function (item, state) {
-      Slick.Util.setvalue(item, args.column.field, state)
+      item[args.column.field] = state;
     };
 
     this.isValueChanged = function () {
@@ -355,14 +355,14 @@
         range: "min",
         value: defaultValue,
         slide: function (event, ui) {
-          $input.val(ui.value)
+          $input.val(ui.value);
         }
       });
 
       $picker.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
         $input.val($(this).attr("val"));
         $picker.find(".editor-percentcomplete-slider").slider("value", $(this).attr("val"));
-      })
+      });
     };
 
     this.destroy = function () {
@@ -473,7 +473,7 @@
     this.position = function (position) {
       $wrapper
           .css("top", position.top - 5)
-          .css("left", position.left - 5)
+          .css("left", position.left - 5);
     };
 
     this.destroy = function () {
@@ -520,7 +520,7 @@
       var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
       if (options){
         var option_str = "";
-        for( i in options ){
+        for(var i in options ){
           v = options[i];
           option_str += "<OPTION value='"+(v.key || v.id)+"'>"+(v.value ||v.label)+"</OPTION>";
         }
@@ -539,7 +539,7 @@
     };
 
     this.loadValue = function(item) {
-      defaultValue = Slick.Util.getvalue(item, args.column.field);
+      defaultValue = item[args.column.field] || "";
       $select.val(defaultValue);
     };
 
@@ -553,7 +553,7 @@
     };
 
     this.applyValue = function(item,state) {
-        Slick.Util.setvalue(item, args.column.field, state);
+        item[args.column.field] = state;
     };
 
     this.isValueChanged = function() {

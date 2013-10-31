@@ -74,14 +74,11 @@
     function save(){
       if (_cid && _store){
         var state = {
-          sortcols: _grid.getSortColumns(),
+          sortcols: getSortColumns(),
           viewport: _grid.getViewport(),
           columns: getColumns()
         };
-
         onStateChanged.notify(state);
-
-
         return _store.set(options.key_prefix + _cid, state);
       }
     }
@@ -101,6 +98,23 @@
                 _grid.scrollRowIntoView(state.viewport.top, true);
               }
               if (state.columns){
+                var defaultColumns = options.defaultColumns;
+                if (defaultColumns){
+                  var lookup = {};
+                  $.each(state.columns, function(idx, c){ lookup[c.id] = c; });
+                  var cols = [];
+                  $.each(defaultColumns, function(idx, col){
+                    if (lookup[col.id]){
+                      cols.push($.extend(true, {}, col, {
+                        width: lookup[col.id].width,
+                        headerCssClass: lookup[col.id].headerCssClass
+                      }));
+                    }
+                  });
+
+                  state.columns = cols;
+                }
+
                 _grid.setColumns(state.columns);
               }
             }
@@ -110,8 +124,17 @@
     }
 
     function getColumns(){
-      var cols = _grid.getColumns();
-      return cols;
+      return $.map(_grid.getColumns(), function(col){
+        return {
+          id: col.id,
+          width: col.width
+        };
+      });
+    }
+
+    function getSortColumns(){
+      var sortCols = _grid.getSortColumns();
+      return sortCols;
     }
 
     /*

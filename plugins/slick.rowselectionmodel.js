@@ -83,8 +83,8 @@
 
     function setSelectedRanges(ranges) {
       var 
-        selectionIndexes = $.map(ranges, function(r){ return r.fromRow }),
-        deleteIndexes = _rowIndexes.filter(function(elem){ return selectionIndexes.indexOf(elem) === -1 });
+        selectionIndexes = $.map(ranges, function(r){ return r.fromRow; }),
+        deleteIndexes = _rowIndexes.filter(function(elem){ return selectionIndexes.indexOf(elem) === -1; });
 
       _rowIndexes = selectionIndexes;
       _ranges = ranges;
@@ -111,7 +111,7 @@
       if (activeRow && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && (e.which == 38 || e.which == 40)) {
         var selectedRows = getSelectedRows();
         selectedRows.sort(function (x, y) {
-          return x - y
+          return x - y;
         });
 
         if (!selectedRows.length) {

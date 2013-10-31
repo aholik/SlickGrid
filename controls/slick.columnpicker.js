@@ -2,6 +2,7 @@
   function SlickColumnPicker(columns, grid, options) {
     var $menu;
     var columnCheckboxes;
+    var onUpdateColumns = new Slick.Event();
 
     var defaults = {
       fadeSpeed:250
@@ -126,6 +127,7 @@
         }
 
         grid.setColumns(visibleColumns);
+        onUpdateColumns.notify(visibleColumns, new Slick.EventData());
       }
     }
 
@@ -136,7 +138,8 @@
     init();
 
     return {
-      "getAllColumns": getAllColumns
+      "getAllColumns": getAllColumns,
+      "onUpdateColumns": onUpdateColumns
     };
   }
 

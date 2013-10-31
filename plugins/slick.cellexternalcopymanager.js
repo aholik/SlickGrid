@@ -36,7 +36,7 @@
     var keyCodes = {
       'C':67,
       'V':86
-    }
+    };
 
     function init(grid) {
       _grid = grid;
@@ -153,8 +153,8 @@
         w=0;
         for (var x = 0; x < destW; x++){
           w++;
-          var desty = activeRow + y;
-          var destx = activeCell + x;
+          desty = activeRow + y;
+          destx = activeCell + x;
           
           if (desty < data.length && destx < grid.getColumns().length ) { 
             var nd = _grid.getCellNode(desty, destx);
@@ -173,7 +173,7 @@
         'fromRow': activeRow,
         'toCell': activeCell+w-1,
         'toRow': activeRow+h-1
-      }
+      };
 
       markCopySelection([bRange]);
       _grid.getSelectionModel().setSelectedRanges([bRange]);
@@ -192,7 +192,8 @@
             _copiedRanges = null;
           }
         }
-        
+
+        var ta;
         if (e.which == keyCodes.C && (e.ctrlKey || e.metaKey)) {    // CTRL + C
           ranges = _grid.getSelectionModel().getSelectedRanges();
           if (ranges.length != 0) {
@@ -218,7 +219,7 @@
                 clipTextArr.push(clipTextRows.join("\r\n"));
             }
             var clipText = clipTextArr.join('');
-            var ta = _createTextBox(clipText);
+            ta = _createTextBox(clipText);
             $(ta).select();
             
             setTimeout(function(){
@@ -230,7 +231,7 @@
         }
 
         if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {    // CTRL + V
-            var ta = _createTextBox('');
+            ta = _createTextBox('');
             
             setTimeout(function(){
                 _decodeTabularData(_grid, ta);

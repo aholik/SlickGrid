@@ -5,6 +5,7 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <link rel="stylesheet" href="../plugins/slick.headerbuttons.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
   <style>
     .icon-highlight-off,
     .icon-highlight-on {
@@ -49,6 +50,7 @@
 <script src="../slick.grid.js"></script>
 <script src="../slick.extensions.js"></script>
 <script src="../plugins/slick.state.js"></script>
+<script src="../controls/slick.columnpicker.js"></script>
 
 <script>
   var grid;
@@ -84,15 +86,15 @@
 
   $(function(){
     var dataView = new Slick.Data.DataView();
-    var statePersistor = new Slick.State({
-      cid: 'sample-grid'
-    });
+    var statePersistor = new Slick.State({ cid: 'sample-grid' });
 
     statePersistor.onStateChanged.subscribe(function(e, args){
       console.log("onStateChanged", args);
     });
 
     grid = new Slick.Grid("#myGrid", dataView, columns, options);
+    var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
+    columnpicker.onUpdateColumns.subscribe(function(){ statePersistor.save(); });
 
     grid.registerPlugin(statePersistor);
 
@@ -109,6 +111,7 @@
     function sortDataView(cols){
       dataView.sort(function (dataRow1, dataRow2) {
         for (var i = 0, l = cols.length; i < l; i++) {
+          if (!cols[i].sortCol) continue;
           var field = cols[i].sortCol.field;
           var sign = cols[i].sortAsc ? 1 : -1;
           var value1 = dataRow1[field], value2 = dataRow2[field];
@@ -124,7 +127,7 @@
     }
 
     grid.onSort.subscribe(function (e, args) {
-      sortDataView(args.sortCols);     
+      sortDataView(args.sortCols);
     });
 
     grid.init();

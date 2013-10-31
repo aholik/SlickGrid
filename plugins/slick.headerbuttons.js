@@ -89,7 +89,6 @@
 
 
     function handleHeaderCellRendered(e, args) {
-      console.log("handleHeaderCellRendered");
       var column = args.column;
 
       if (column.header && column.header.buttons) {
