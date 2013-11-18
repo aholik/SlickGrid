@@ -31,7 +31,10 @@
                 "cancel": "Cancel",
                 "selectAll": "Select All",
                 "sortAsc": "Sort Ascending",
-                "sortDesc": "Sort Descending"
+                "sortDesc": "Sort Descending",
+                "empty": "empty",
+                "trueDesc": "True",
+                "falseDesc": "False"
             }
         };
         var $menu;
@@ -144,11 +147,12 @@
             var filterOptions = "<label><input type='checkbox' value='-1' />("+options.messages.selectAll+")</label>";
 
             for (var i = 0; i < filterItems.length; i++) {
-                var filtered = _.contains(workingFilters, filterItems[i]);
+                var filtered = _.contains(workingFilters, filterItems[i].value);
 
                 filterOptions += "<label><input type='checkbox' value='" + i + "'" + 
                                 (filtered ? " checked='checked'" : "") +
-                                "/>" + filterItems[i] + "</label>";
+                                " data-filtervalue='"+ filterItems[i].value +"'"+
+                                "/>" + filterItems[i].title + "</label>";
             }
 
             var $filter = $("<div class='filter'>")
@@ -194,20 +198,22 @@
             var value = $checkbox.val();
             var $filter = $checkbox.parent().parent();
 
+            console.log(value);
+
             if ($checkbox.val() < 0) {
                 // Select All
                 if ($checkbox.prop('checked')) {
                     $(':checkbox', $filter).prop('checked', true);
-                    workingFilters = filterItems.slice(0);
+                    workingFilters = _.pluck(filterItems.slice(0), "value");
                 } else {
                     $(':checkbox', $filter).prop('checked', false);
                     workingFilters.length = 0;
                 }
             } else {
-                var index = _.indexOf(workingFilters, filterItems[value]);
+                var index = _.indexOf(workingFilters, filterItems[value].value);
 
                 if ($checkbox.prop('checked') && index < 0) {
-                    workingFilters.push(filterItems[value]);
+                    workingFilters.push(filterItems[value].value);
                 }
                 else {
                     if (index > -1) {
@@ -234,30 +240,47 @@
             e.stopPropagation();
         }
 
-        function getFilterValues(dataView, column) {
-            var seen = [];
-            for (var i = 0; i < dataView.getLength() ; i++) {
-                var value = dataView.getItem(i)[column.field];
+        function sanitizeFilterValue(value){
+            var title = value;
+            if (typeof value === 'undefined' || value === null || value === ''){
+                title = options.messages.empty;
+            }
+            else if (value === false) {
+                title = options.messages.falseDesc;
+            }
+            else if (value === true) {
+                title = options.messages.trueDesc;
+            }
 
-                if (!_.contains(seen, value)) {
-                    seen.push(value);
+            return { title: title, value: value };
+        }
+
+        function getFilterValues(dataView, column) {
+            var seen = [], items = [];
+            for (var i = 0; i < dataView.getLength() ; i++) {
+                var v = sanitizeFilterValue(dataView.getItem(i)[column.field]);
+
+                if (!_.contains(seen, v.value)) {
+                    seen.push(v.value);
+                    items.push(v);
                 }
             }
 
-            return _.sortBy(seen, function (v) { return v; });
+            return _.sortBy(items, function (v) { return v.title; });
         }
 
         function getAllFilterValues(data, column) {
-            var seen = [];
+            var seen = [], items = [];
             for (var i = 0; i < data.length; i++) {
-                var value = data[i][column.field];
+                var v = sanitizeFilterValue(data[i][column.field]);
 
-                if (!_.contains(seen, value)) {
-                    seen.push(value);
+                if (!_.contains(seen, v.value)) {
+                    seen.push(v.value);
+                    items.push(v);
                 }
             }
 
-            return _.sortBy(seen, function (v) { return v; });
+            return _.sortBy(items, function (v) { return v.title; });
         }
 
         function handleMenuItemClick(e) {
