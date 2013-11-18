@@ -100,14 +100,17 @@
               if (state.columns){
                 var defaultColumns = options.defaultColumns;
                 if (defaultColumns){
-                  var lookup = {};
-                  $.each(state.columns, function(idx, c){ lookup[c.id] = c; });
+                  var defaultColumnsLookup = {};
+                  $.each(defaultColumns, function(idx, colDef){
+                    defaultColumnsLookup[colDef.id] = colDef;
+                  });
+
                   var cols = [];
-                  $.each(defaultColumns, function(idx, col){
-                    if (lookup[col.id]){
-                      cols.push($.extend(true, {}, col, {
-                        width: lookup[col.id].width,
-                        headerCssClass: lookup[col.id].headerCssClass
+                  $.each(state.columns, function(idx, columnDef){
+                    if (defaultColumnsLookup[columnDef.id]){
+                      cols.push($.extend(true, {}, defaultColumnsLookup[columnDef.id], {
+                        width: columnDef.width,
+                        headerCssClass: columnDef.headerCssClass
                       }));
                     }
                   });

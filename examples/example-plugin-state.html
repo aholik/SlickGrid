@@ -86,7 +86,7 @@
 
   $(function(){
     var dataView = new Slick.Data.DataView();
-    var statePersistor = new Slick.State({ cid: 'sample-grid' });
+    var statePersistor = new Slick.State({ cid: 'sample-grid', defaultColumns: columns });
 
     statePersistor.onStateChanged.subscribe(function(e, args){
       console.log("onStateChanged", args);
