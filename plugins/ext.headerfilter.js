@@ -25,10 +25,12 @@
             sortAscImage: "../images/sort-asc.png",
             sortDescImage: "../images/sort-desc.png",
             sortMenuitems: true,
+            textFilter: true,
             messages: {
                 "ok": "OK",
                 "clear": "Clear",
                 "cancel": "Cancel",
+                "textFilter": "Filter",
                 "selectAll": "Select All",
                 "sortAsc": "Sort Ascending",
                 "sortDesc": "Sort Descending",
@@ -55,6 +57,10 @@
         function destroy() {
             handler.unsubscribeAll();
             $(document.body).unbind("mousedown", handleBodyMouseDown);
+        }
+
+        function isValue(val){
+            return typeof val !== 'undefined' && val !== null && val !== '';
         }
 
         function handleBodyMouseDown(e) {
@@ -110,6 +116,22 @@
              .appendTo($item);
         }
 
+        function addTextFilter(menu, columnDef, value){
+            var $li = $("<div class='textfilter'>");
+
+            $('<label>').text(options.messages.textFilter).appendTo($li);
+
+            $('<input type="text">')
+                .val(value)
+                .on('change', function(e){
+                    var value = $(e.target).val();
+                    columnDef.textFilterValue = isValue(value) ? value : null;
+                })
+                .appendTo($li);
+
+            $li.appendTo(menu);
+        }
+
         function showFilter(e) {
             e.stopPropagation();
             e.preventDefault();
@@ -144,6 +166,10 @@
                 addMenuItem($menu, columnDef, options.messages.sortDesc, 'sort-desc', options.sortDescImage);
             }
 
+            if (columnDef.textFilter){
+                addTextFilter($menu, columnDef, columnDef.textFilterValue);
+            }
+
             var filterOptions = "<label><input type='checkbox' value='-1' />("+options.messages.selectAll+")</label>";
 
             for (var i = 0; i < filterItems.length; i++) {
@@ -163,7 +189,7 @@
                 .appendTo($menu)
                 .bind('click', function (ev) {
                     columnDef.filterValues = workingFilters.splice(0);
-                    setButtonImage($menuButton, columnDef.filterValues.length > 0);
+                    setButtonImage($menuButton, columnDef.filterValues.length > 0 || isValue(columnDef.textFilterValue) );
                     handleApply(ev, columnDef);
                 });
 
@@ -171,6 +197,7 @@
                 .appendTo($menu)
                 .bind('click', function (ev) {
                     columnDef.filterValues.length = 0;
+                    columnDef.textFilterValue = null;
                     setButtonImage($menuButton, false);
                     handleApply(ev, columnDef);
                 });
@@ -197,8 +224,6 @@
         function changeWorkingFilter(filterItems, workingFilters, $checkbox) {
             var value = $checkbox.val();
             var $filter = $checkbox.parent().parent();
-
-            console.log(value);
 
             if ($checkbox.val() < 0) {
                 // Select All
@@ -240,7 +265,7 @@
             e.stopPropagation();
         }
 
-        function sanitizeFilterValue(value){
+        function sanitizeFilterValue(value, column){
             var title = value;
             if (typeof value === 'undefined' || value === null || value === ''){
                 title = options.messages.empty;
@@ -249,7 +274,10 @@
                 title = options.messages.falseDesc;
             }
             else if (value === true) {
-                title = options.messages.trueDesc;
+                title = options.messages.trueDesc;                
+            }
+            else if (column.formatterName === 'sentenceToWords' || column.formatterName === 'date' ){
+                title = column.formatter(null,null,value);
             }
 
             return { title: title, value: value };
@@ -258,7 +286,7 @@
         function getFilterValues(dataView, column) {
             var seen = [], items = [];
             for (var i = 0; i < dataView.getLength() ; i++) {
-                var v = sanitizeFilterValue(dataView.getItem(i)[column.field]);
+                var v = sanitizeFilterValue(dataView.getItem(i)[column.field], column);
 
                 if (!_.contains(seen, v.value)) {
                     seen.push(v.value);
@@ -272,7 +300,7 @@
         function getAllFilterValues(data, column) {
             var seen = [], items = [];
             for (var i = 0; i < data.length; i++) {
-                var v = sanitizeFilterValue(data[i][column.field]);
+                var v = sanitizeFilterValue(data[i][column.field], column);
 
                 if (!_.contains(seen, v.value)) {
                     seen.push(v.value);

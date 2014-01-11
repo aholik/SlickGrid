@@ -4,6 +4,12 @@
     var columnCheckboxes;
     var onUpdateColumns = new Slick.Event();
 
+    var columnsLookup = {};
+
+    for(var i=0;i<columns.length;i++){
+      columnsLookup[ columns[i].id ] = columns[i];
+    }
+
     var defaults = {
       fadeSpeed:250
     };
@@ -30,6 +36,8 @@
 
       var $li, $input;
       for (var i = 0; i < columns.length; i++) {
+        if (columns[i].id == "_checkbox_selector") continue;
+
         $li = $("<li />").appendTo($menu);
         $input = $("<input type='checkbox' />").data("column-id", columns[i].id);
         columnCheckboxes.push($input);
@@ -115,15 +123,23 @@
 
       if ($(e.target).is(":checkbox")) {
         var visibleColumns = [];
+
         $.each(columnCheckboxes, function (i, e) {
-          if ($(this).is(":checked")) {
-            visibleColumns.push(columns[i]);
+          var columnID = $(e).data('column-id');
+          if (columnID && columnsLookup[columnID]){
+            if ($(this).is(":checked")) {
+              visibleColumns.push( columnsLookup[columnID] );
+            }
           }
         });
 
         if (!visibleColumns.length) {
           $(e.target).attr("checked", "checked");
           return;
+        }
+
+        if (columnsLookup._checkbox_selector){
+          visibleColumns.push(columnsLookup._checkbox_selector);
         }
 
         grid.setColumns(visibleColumns);
