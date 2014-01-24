@@ -1,3 +1,5 @@
+/*jshint -W041*/  // Use '===' to compare with 'null'. (W041)
+
 /***
  * Contains basic SlickGrid formatters.
  * 
@@ -63,8 +65,7 @@
   }
 
   function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
-    var options = typeof columnDef.options === 'function' ? columnDef.options() : args.column.options;
-    value = ko.utils.unwrapObservable(value);
+    var options = typeof columnDef.options === 'function' ? columnDef.options() : columnDef.options;
 
     if (options){
       var match;

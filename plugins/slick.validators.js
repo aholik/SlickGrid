@@ -33,12 +33,12 @@
   var regexExports = {};
 
   function ctorFactory(name){
-    function ctor(options){
+    return function ctor(options){
       return new RegexValidator($.extend(true, { 
         "msg": defaults.messages[name],
         "regex": defaults.regex[name]
       }, options));
-    }
+    };
   }
 
   for(var name in defaults.regex){

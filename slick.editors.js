@@ -1,3 +1,5 @@
+/*jshint -W041*/  // Use '===' to compare with 'null'. (W041)
+
 /***
  * Contains basic SlickGrid editors.
  * @module Editors
@@ -20,6 +22,7 @@
       }
     }
   });
+
 
   function TextEditor(args) {
     var $input;
@@ -522,7 +525,7 @@
         var option_str = "";
         for(var i in options ){
           v = options[i];
-          option_str += "<OPTION value='"+(v.key || v.id)+"'>"+(v.value ||v.label)+"</OPTION>";
+          option_str += "<OPTION value='"+( v.key == null ? v.id : v.key )+"'>"+(v.value == null ? v.label : v.value)+"</OPTION>";
         }
         $select = $("<SELECT tabIndex='0' class='editor-select'>"+ option_str +"</SELECT>");
         $select.appendTo(args.container);
