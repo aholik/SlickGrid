@@ -18,16 +18,47 @@
         "Checkbox": CheckboxEditor,
         "PercentComplete": PercentCompleteEditor,
         "LongText": LongTextEditor,
-        "SelectCell": SelectCellEditor
+        "SelectCell": new SelectCellEditor(),
+        "SelectCellEditor": SelectCellEditor,
+        "TypeaheadCellEditor": TypeaheadCellEditor,
+        "messages": {
+          please_enter_a_valid_positive_number: "Please enter a valid positive number",
+          please_enter_a_valid_integer: "Please enter a valid integer"
+        }
       }
     }
   });
 
+  function _validate(args, value){
+    var validator = args.column.validator;
+    if (validator) {
+      var validationResults;
+
+      if (Array.isArray(validator)){
+        for(var i=0; i<validator.length; i++){
+          validationResults = validator[i](value, args);
+          if (!validationResults.valid) {
+            return validationResults;
+          }
+        }
+      }
+      else {
+        validationResults = validator(value, args);
+        if (!validationResults.valid) {
+          return validationResults;
+        }
+      }
+    }
+
+    return {
+      valid: true,
+      msg: null
+    };
+  }
 
   function TextEditor(args) {
     var $input;
     var defaultValue;
-    var scope = this;
 
     this.init = function () {
       $input = $("<INPUT type=text class='editor-text' />")
@@ -77,22 +108,12 @@
     };
 
     this.validate = function () {
-      if (args.column.validator) {
-        var validationResults = args.column.validator($input.val());
-        if (!validationResults.valid) {
-          return validationResults;
-        }
-      }
-
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $input.val());
     };
 
     this.init();
   }
-  
+
   function IntegerEditor(args) {
     var $input;
     var defaultValue;
@@ -142,14 +163,11 @@
       if (isNaN($input.val())) {
         return {
           valid: false,
-          msg: "Please enter a valid integer"
+          msg: Slick.Editors.messages.please_enter_a_valid_integer
         };
       }
 
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $input.val());
     };
 
     this.init();
@@ -231,10 +249,7 @@
     };
 
     this.validate = function () {
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $input.val());
     };
 
     this.init();
@@ -277,10 +292,7 @@
     };
 
     this.validate = function () {
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $select.val());
     };
 
     this.init();
@@ -327,10 +339,7 @@
     };
 
     this.validate = function () {
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $select.val());
     };
 
     this.init();
@@ -398,14 +407,11 @@
       if (isNaN(parseInt($input.val(), 10))) {
         return {
           valid: false,
-          msg: "Please enter a valid positive number"
+          msg: Slick.Editors.messages.please_enter_a_valid_positive_number
         };
       }
 
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $input.val());
     };
 
     this.init();
@@ -505,10 +511,7 @@
     };
 
     this.validate = function () {
-      return {
-        valid: true,
-        msg: null
-      };
+      return _validate.call(this, args, $input.val());
     };
 
     this.init();
@@ -516,61 +519,198 @@
 
 
   function SelectCellEditor(args){
-    var $select, defaultValue,
-      scope = this;
+    var valueMember = (args && args.valueMember) ? args.valueMember : 'id';
+    var displayMember = (args && args.displayMember) ? args.displayMember: 'label';
 
-    this.init = function() {
-      var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
-      if (options){
-        var option_str = "";
-        for(var i in options ){
-          v = options[i];
-          option_str += "<OPTION value='"+( v.key == null ? v.id : v.key )+"'>"+(v.value == null ? v.label : v.value)+"</OPTION>";
+    return function(args){
+      var $select, defaultValue,
+        scope = this;
+
+      var getValue = function(data){
+        if (data==null) return;
+        return data[valueMember] == null ? data.key : data[valueMember];
+      };
+      var getDisplay = function(data){
+        if (data==null) return;
+        return data[displayMember] == null ? data.label : data[displayMember];
+      };
+
+      this.init = function() {
+        var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
+        if (options){
+          var option_str = "", v;
+          for(var i = 0, len=options.length; i<len; i++){
+            v = options[i];
+            option_str += "<OPTION value='"+getValue(v)+"'>"+getDisplay(v)+"</OPTION>";
+          }
+          $select = $("<SELECT tabIndex='0' class='editor-select'>"+ option_str +"</SELECT>");
+          $select.appendTo(args.container);
+          $select.focus();
         }
-        $select = $("<SELECT tabIndex='0' class='editor-select'>"+ option_str +"</SELECT>");
-        $select.appendTo(args.container);
+      };
+
+      this.destroy = function() {
+        $select.remove();
+      };
+
+      this.focus = function() {
         $select.focus();
-      }
-    };
+      };
 
-    this.destroy = function() {
-      $select.remove();
-    };
+      this.loadValue = function(item) {
+        defaultValue = item[args.column.field] || "";
+        $select.val(defaultValue);
+      };
 
-    this.focus = function() {
-      $select.focus();
-    };
+      this.serializeValue = function() {
+        if(args.column.options){
+          return $select.val();
+        }
+        else {
+          return ($select.val() == "yes");
+        }
+      };
 
-    this.loadValue = function(item) {
-      defaultValue = item[args.column.field] || "";
-      $select.val(defaultValue);
-    };
-
-    this.serializeValue = function() {
-      if(args.column.options){
-        return $select.val();
-      }
-      else {
-        return ($select.val() == "yes");
-      }
-    };
-
-    this.applyValue = function(item,state) {
+      this.applyValue = function(item,state) {
         item[args.column.field] = state;
-    };
+      };
 
-    this.isValueChanged = function() {
+      this.isValueChanged = function() {
         return ($select.val() != defaultValue);
-    };
+      };
 
-    this.validate = function() {
-        return {
-            valid: true,
-            msg: null
-        };
-    };
+      this.validate = function() {
+          return _validate.call(this, args, $select.val());
+      };
 
-    this.init();
+      this.init();
+    };
+  }
+
+
+  function TypeaheadCellEditor(opts){
+    var valueMember = (opts && opts.valueMember) ? opts.valueMember : 'id';
+    var displayMember = (opts && opts.displayMember) ? opts.displayMember: 'label';
+
+    var dataSource = opts.source; // must be a function
+
+    return function(args){
+      var $select, $input,
+        calendarOpen = false,
+        defaultValue,
+        scope = this;
+
+      var getValue = function(data){
+        if (data==null) return;
+        return data[valueMember] == null ? data.key : data[valueMember];
+      };
+      var getDisplay = function(data){
+        if (data==null) return;
+        return data[displayMember] == null ? data.label : data[displayMember];
+      };
+
+      this.init = function() {
+        var wrapper = args.container;
+
+        $input = $("<INPUT id='tags' class='editor-text' />");
+        $input.width($(args.container).innerWidth() - 25);
+        $input.appendTo(wrapper);
+
+        $( "<a>" )
+            .attr( "tabIndex", -1 )
+            .attr( "title", "Show All Items" )
+            .appendTo( wrapper )
+            /*
+            .button({
+                icons: {
+                    primary: "ui-icon-triangle-1-s"
+                },
+                text: false
+            })
+            */
+            .removeClass( "ui-corner-all" )
+            .addClass( "ui-corner-right ui-combobox-toggle" )
+            .click(function() {
+
+                // close if already visible
+                if ( $input.autocomplete( "widget" ).is( ":visible" ) ) {
+                    $input.autocomplete( "close" );
+                    return;
+                }
+
+                // work around a bug (likely same cause as #5265)
+                $( this ).blur();
+
+                // pass empty string as value to search for, displaying all results
+                $input.autocomplete( "search", "" );
+
+                $input.focus();
+            });
+
+          var cache = {};
+
+         $input.focus().select();
+         $input.autocomplete({ 
+          source: function( request, response ) {
+            var term = request.term;
+            if ( term in cache ) {
+              response( cache[term] );
+              return;
+            }
+
+            dataSource(term, function(result){
+              cache[term] = result;
+              response(result);
+            });
+          },
+          minLength: 2,
+          select: function( event, ui ) {
+            console.log('select', ui);
+          }
+        });
+      };
+
+      this.destroy = function() {
+        $input.autocomplete("destroy");
+        //$select.remove();
+      };
+
+      this.focus = function() {
+        $input.focus();
+        //$select.focus();
+      };
+
+      this.loadValue = function(item) {
+        defaultValue = item[args.column.field] || "";
+        $input.val(defaultValue);
+      };
+
+      this.serializeValue = function() {
+        if(args.column.options){
+          return $input.val();
+        }
+        else {
+          return ($input.val() == "yes");
+        }
+      };
+
+      this.applyValue = function(item,state) {
+          item[args.column.field] = state;
+      };
+
+      this.isValueChanged = function() {
+          return ($input.val() != defaultValue);
+      };
+
+      this.validate = function() {
+          return {
+              valid: true,
+              msg: null
+          };
+      };
+
+      this.init();
+    };
   }
   
 })(jQuery);
