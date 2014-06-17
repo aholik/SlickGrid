@@ -46,9 +46,12 @@
   </div>
 </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<!--script src="../lib/jquery-1.7.min.js"></script-->
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<!--script src="../lib/jquery-ui-1.8.16.custom.min.js"></script-->
 <script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/underscore.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.cellrangedecorator.js"></script>
@@ -64,10 +67,16 @@
 <script src="../slick.dataview.js"></script>
 
 <script>
+  var samples;
+    
+  $.getJSON('samples.json').then(function(result){
+    samples = result;
+  });
+  
   var columns = [
     {
-      id: "title", 
-      name: "Title", 
+      id: "title",
+      name: "Title",
       field: "title", 
       width: 120, 
       cssClass: "cell-title", 
@@ -132,6 +141,26 @@
         { key : 1, label: 'invalid' },
         { key : 2, label: 'done' }
       ],
+      validator: Slick.Validators.required
+    },
+    {
+      id: "remote", 
+      name: "Remote Source", 
+      field: "remote", 
+      editor: new Slick.Editors.TypeaheadCellEditor({
+        source: function(term, callback){
+          window.setTimeout(function(){
+            var d = _.chain(samples)
+              .filter(function(p){
+                return p.name.toLowerCase().indexOf(term.toLowerCase()) > -1;
+              })
+              .pluck('name')
+              .value();
+
+            callback(d);
+          }, .1);
+        }
+      }),
       validator: Slick.Validators.required
     }
   ];

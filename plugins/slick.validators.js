@@ -4,7 +4,8 @@
     "messages": {
       "number": "Field must contain only numbers",
       "decimal": "Field must contain only a decimal number",
-      "required": "This field is a required"
+      "required": "This field is a required",
+      "unique": "This field must be unique"
     },
     "regex": {
       "decimal": /^\-?[0-9]*\.?[0-9]+$/,
@@ -38,7 +39,7 @@
         "msg": defaults.messages[name],
         "regex": defaults.regex[name]
       }, options));
-    };
+    }
   }
 
   for(var name in defaults.regex){
@@ -58,6 +59,24 @@
   }
   var required = new RequiredValidator();
 
+
+  function UniqueValidator(options){
+    options = $.extend(true, { "msg": defaults.messages.unique }, options);
+
+    return function(value, args){
+      var data = args.grid.getData();
+      var field = args.column.field;
+      for(var i=0,len=data.length;i<len;i++){
+        if (data[i][field] == value){
+          return { valid:false, msg: options.msg };
+        }
+      }
+      return { valid: true, msg: null };
+    };
+  }
+  var unique = new UniqueValidator();
+
+
   // register namespace
   $.extend(true, window, {
     "Slick": {
@@ -65,7 +84,9 @@
         "defaults": defaults,
         "RequiredValidator": RequiredValidator,
         "required": required,
-        "RegexValidator": RegexValidator
+        "RegexValidator": RegexValidator,
+        "UniqueValidator": UniqueValidator,
+        "unique": unique
       })
     }
   });

@@ -65,20 +65,24 @@
   }
 
   function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
+    if (value==null) return '';
+
     var options = typeof columnDef.options === 'function' ? columnDef.options() : columnDef.options;
 
     if (options){
-      var match;
-      for(var i in options){
+      var matching;
+
+      for (var i=0,len=options.length;i<len;i++){
         if (options[i].id == value || options[i].key == value){
-          match = options[i];
+          matching = options[i];
           break;
         }
       }
 
-      if (match){
-        return match.value || match.label || value;
-      }
+      if (matching==null) return '';
+
+      if (matching.label != null) return matching.label;
+      if (matching.value != null) return matching.value;
     }
     return value;
   }
@@ -91,7 +95,7 @@
 
     return function(row, cell, value, columnDef, dataContext){
       var val = value;
-      for(var i in formatters){
+      for (var i=0,len=formatters.length;i<len;i++){
         val = formatters[i](row, cell, val, columnDef, dataContext);
       }
       return val;

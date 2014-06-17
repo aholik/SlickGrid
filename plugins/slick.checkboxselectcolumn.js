@@ -18,7 +18,10 @@
         cssClass: null,
         toolTip: "Select/Deselect All",
         width: 30,
-        rowselector: true   // is it a column for grid row selection
+        rowselector: true,   // is it a column for grid row selection
+        frozen: true,
+        systemColumn: true,
+        filterable: false
       },
       _options = $.extend(true, {}, _defaults, options);
 
@@ -153,7 +156,8 @@
         width: _options.width,
         resizable: false,
         sortable: false,
-        nofilter: true,
+        filterable: false,
+        systemColumn: true,
         hideable: false,
         cssClass: _options.cssClass,
         formatter: checkboxSelectionFormatter

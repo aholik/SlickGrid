@@ -34,13 +34,16 @@
         if (typeof obj !== 'undefined'){
           obj = JSON.stringify(obj);
         }
+        if (obj==null){
+          return localStorage.removeItem(key);
+        }
         localStorage.setItem(key, obj);
       }
     };
   };
 
   var defaults = {
-    key_prefix: "slickgrid:",
+    key_prefix: "slick.state:",
     storage: new localStorageWrapper()
   };
 
@@ -65,9 +68,9 @@
     }
 
     function destroy() {
-      grid.onSort.unsubscribe(save);
-      grid.onColumnsReordered.unsubscribe(save);
-      grid.onColumnsResized.unsubscribe(save);
+      _grid.onSort.unsubscribe(save);
+      _grid.onColumnsReordered.unsubscribe(save);
+      _grid.onColumnsResized.unsubscribe(save);
       save();
     }
 
@@ -78,8 +81,8 @@
           viewport: _grid.getViewport(),
           columns: getColumns()
         };
+        _store.set(options.key_prefix + _cid, state);
         onStateChanged.notify(state);
-        return _store.set(options.key_prefix + _cid, state);
       }
     }
 
@@ -99,6 +102,8 @@
               }
               if (state.columns){
                 var defaultColumns = options.defaultColumns;
+
+
                 if (defaultColumns){
                   var defaultColumnsLookup = {};
                   $.each(defaultColumns, function(idx, colDef){
@@ -106,8 +111,13 @@
                   });
 
                   var cols = [];
+
+                  if (defaultColumnsLookup["_checkbox_selector"]){
+                    cols.push(defaultColumnsLookup["_checkbox_selector"]);
+                  }
+
                   $.each(state.columns, function(idx, columnDef){
-                    if (defaultColumnsLookup[columnDef.id]){
+                    if ( (columnDef.id !== '_checkbox_selector' && defaultColumnsLookup[columnDef.id]) || columnDef.frozen ){
                       cols.push($.extend(true, {}, defaultColumnsLookup[columnDef.id], {
                         width: columnDef.width,
                         headerCssClass: columnDef.headerCssClass
@@ -140,6 +150,10 @@
       return sortCols;
     }
 
+    function clear(){
+      _store.set(options.key_prefix + _cid, null);
+    }
+
     /*
      *  API
      */
@@ -147,6 +161,7 @@
       "init": init,
       "destroy": destroy,
       "save": save,
+      "clear": clear,
       "restore": restore,
       "onStateChanged": onStateChanged
     });

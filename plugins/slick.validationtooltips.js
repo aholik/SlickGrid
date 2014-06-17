@@ -6,51 +6,32 @@
     }
   });
 
-  function ValidationTooltips(options) {
+  function ValidationTooltips(opts) {
     var 
-      _grid,
-      _self = this,
-      _defaults = { 
-        "className": "cell-tooltip-validation-error"
-      };
+      grid,
+      options = $.extend(true, {}, ValidationTooltips.defaults, opts);
 
-    function init(grid) {
-      options = $.extend(true, {}, _defaults, options);
-      _grid = grid;
-      _grid.onValidationError.subscribe(handleValidationError);
-      _grid.onBeforeCellEditorDestroy.subscribe(handleBeforeCellEditDestroy);
+    function init(gridInstance) {
+      grid = gridInstance;
+      grid.onValidationError.subscribe(handleValidationError);
+      grid.onBeforeCellEditorDestroy.subscribe(handleBeforeCellEditDestroy);
     }
 
     function destroy() {
-      _grid.onValidationError.unsubscribe(handleValidationError);
-      _grid.onBeforeCellEditorDestroy.unsubscribe(handleBeforeCellEditDestroy);
+      grid.onValidationError.unsubscribe(handleValidationError);
+      grid.onBeforeCellEditorDestroy.unsubscribe(handleBeforeCellEditDestroy);
     }
 
     function handleValidationError(e, args){
       var
         validationResult = args.validationResults,
-        errorMessage = validationResult.msg,
-        $node = $(args.cellNode);
-        
-      var ts = $node.data('tooltipsy');    
-      if (ts) ts.destroy();
-      
-      $node.tooltipsy({
-        alignTo: "element",
-        offset: [0,8],
-        content: errorMessage,
-        showEvent: null,
-        hideEvent: null,
-        className: options.className
-      });
-      $node.data('tooltipsy').show();
+        errorMessage = validationResult.msg;
+
+      ValidationTooltips.tooltip.set($(args.cellNode), errorMessage, args);
     }
 
     function handleBeforeCellEditDestroy(e, args){
-      var ts = $(args.grid.getActiveCellNode()).data('tooltipsy');
-      if (ts){
-        ts.destroy();
-      }
+      ValidationTooltips.tooltip.clear($(args.grid.getActiveCellNode()), args);
     }
 
     $.extend(this, {
@@ -58,4 +39,33 @@
       "destroy": destroy
     });
   }
+
+  ValidationTooltips.defaults = {
+    "className": "cell-tooltip-validation-error"
+  };
+
+
+  ValidationTooltips.tooltip = {
+    set: function($el, title){
+      // backup title if any
+      if (!$el.data('slick-validation-prev-title')){
+        $el.data('slick-validation-prev-title', $el[0].title || 'null');
+      }
+      $el[0].title = errorMessage;
+    },
+    clear: function($el){
+      var prevTitle = $el.data('slick-validation-prev-title');
+
+      if (prevTitle){
+        $el.removeData('slick-validation-prev-title');
+        if (prevTitle === 'null'){
+          $el.removeAttr('title');
+        }
+        else {
+          $el.prop('title', prevTitle);
+        }
+      }
+    }
+  };
+
 })(jQuery);
